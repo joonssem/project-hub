@@ -1,0 +1,41 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"Project Hub public catalog v2",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["version","projects","presets"],
+  "properties":{
+    "version":{"const":2},
+    "projects":{"type":"array","items":{"$ref":"#/$defs/project"}},
+    "presets":{"type":"array","items":{"$ref":"#/$defs/preset"}}
+  },
+  "$defs":{
+    "id":{"type":"string","pattern":"^[a-z0-9-]+$"},
+    "text":{"type":"string"},
+    "name":{"type":"string","pattern":"\\S"},
+    "url":{"type":"string","anyOf":[{"const":""},{"pattern":"^https?://"}]},
+    "project":{
+      "type":"object","additionalProperties":false,
+      "required":["id","name","description","image","url","repositoryUrl","status","tags","student","teacher","hidden","usage"],
+      "properties":{
+        "id":{"$ref":"#/$defs/id"},"name":{"$ref":"#/$defs/name"},
+        "description":{"$ref":"#/$defs/text"},
+        "image":{"type":"string","anyOf":[{"const":""},{"pattern":"^https?://"},{"pattern":"^assets/[\\w/.-]+$"}]},
+        "url":{"$ref":"#/$defs/url"},
+        "repositoryUrl":{"type":"string","anyOf":[{"const":""},{"pattern":"^https://github\\.com/[^/]+/[^/?#]+/?$"}]},
+        "status":{"enum":["development","active","maintenance","archived"]},
+        "tags":{"type":"array","items":{"$ref":"#/$defs/name"}},
+        "student":{"type":"boolean"},"teacher":{"type":"boolean"},"hidden":{"type":"boolean"},
+        "usage":{"$ref":"#/$defs/text"}
+      }
+    },
+    "preset":{
+      "type":"object","additionalProperties":false,
+      "required":["id","name","description","projectIds"],
+      "properties":{
+        "id":{"$ref":"#/$defs/id"},"name":{"$ref":"#/$defs/name"},"description":{"$ref":"#/$defs/text"},
+        "projectIds":{"type":"array","uniqueItems":true,"items":{"$ref":"#/$defs/id"}}
+      }
+    }
+  }
+}

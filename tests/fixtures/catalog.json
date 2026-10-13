@@ -1,0 +1,9 @@
+{
+  "version":1,
+  "projects":[
+    {"id":"game","name":"협동 게임","description":"함께 참여하는 게임","image":"","url":"https://example.com/game","tags":["게임","협동"],"student":true,"teacher":true,"hidden":false,"usage":""},
+    {"id":"lesson","name":"수업 자료","description":"활동 안내","image":"","url":"","tags":["수업 자료"],"student":true,"teacher":true,"hidden":false,"usage":""},
+    {"id":"teacher","name":"교사 사례","description":"활용 설명","image":"","url":"","tags":["활용 사례"],"student":false,"teacher":true,"hidden":false,"usage":"공개 사례"}
+  ],
+  "presets":[{"id":"training","name":"소개","description":"","projectIds":["game","lesson","teacher"]}]
+}

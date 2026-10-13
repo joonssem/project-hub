@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "projects": [
+    {
+      "id": "mini-game-platform",
+      "name": "이어 그리기 · 미니게임 플랫폼",
+      "description": "2~4명이 각자의 기기로 같은 방에 들어가, 만화를 한 칸씩 이어 그리는 협동 게임입니다.",
+      "image": "assets/relay-drawing.svg",
+      "url": "https://mini-game-platform-khaki.vercel.app/",
+      "tags": [
+        "게임",
+        "협동",
+        "이어 그리기"
+      ],
+      "student": true,
+      "teacher": true,
+      "hidden": false,
+      "usage": "2~4명의 학생이 각자 iPad 등 기기로 같은 방에 참여해 만화를 이어 그립니다. 실제 수업 활용 사례는 아직 등록되지 않았습니다.",
+      "repositoryUrl": "https://github.com/joonssem/mini_game_platform",
+      "status": "active"
+    }
+  ],
+  "presets": [
+    {
+      "id": "training",
+      "name": "함께 만드는 활동 소개",
+      "description": "학생들이 함께 참여하는 프로젝트를 소개합니다.",
+      "projectIds": [
+        "mini-game-platform"
+      ]
+    }
+  ]
+}
