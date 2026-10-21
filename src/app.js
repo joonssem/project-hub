@@ -1,5 +1,6 @@
 import {validateCatalog, selectProjects} from './catalog.js';
-import {parseCatalog, serializeCatalog, PROJECT_STATUSES} from './catalog.js';
+import {parseCatalog, serializeCatalog, PROJECT_STATUSES, RESOURCE_SOURCES, selectStudentHome, koreaDate} from './catalog.js';
+import {featureMarkup, editStudentHome} from './home.js';
 const $ = id => document.getElementById(id);
 const escape = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const params = new URLSearchParams(location.search);
@@ -28,8 +29,20 @@ function refresh() {
 }
 function render() {
   if (!data) return;
-  const list = selectProjects(data,view,$('preset').value,$('search').value,$('tag').value);
-  $('count').textContent = `${list.length}개의 프로젝트`;
+  let list = selectProjects(data,view,$('preset').value,$('search').value,$('tag').value);
+  if(view === 'admin') {
+    const source = $('source-filter').value, visibility = $('visibility-filter').value;
+    list = list.filter(p=>(!source || p.source===source) && (!visibility || (visibility==='shown' ? p.student && !p.hidden : !p.student || p.hidden)));
+    renderAdminTable(list);
+    updateStudentPreview();
+  }
+  const home = selectStudentHome(data);
+  $('student-home').innerHTML = view === 'student' ? featureMarkup(data) : '';
+  const showLibrary = view !== 'student' || home.showLibrary;
+  $('cards').hidden = !showLibrary || view === 'admin';
+  document.querySelector('.toolbar').hidden = !showLibrary;
+  document.querySelector('.list-heading').hidden = !showLibrary;
+  $('count').textContent = `${list.length}개의 자료`;
   if (view === 'presentation') { const p = data.presets.find(p => p.id === $('preset').value); $('title').textContent = p?.name || titles[view][0]; $('subtitle').textContent = p ? p.description : '관리자에서 프리셋을 등록하세요.'; }
   const filtered = $('search').value.trim() || $('tag').value;
   const emptyMessage = filtered ? '검색 조건에 맞는 프로젝트가 없습니다.' : view === 'presentation' ? '이 프리셋에 표시할 프로젝트가 없습니다.' : '아직 공개된 프로젝트가 없습니다.';
@@ -37,12 +50,38 @@ function render() {
   if ($('clear-filters')) $('clear-filters').onclick = () => { $('search').value = ''; $('tag').value = ''; render(); $('search').focus(); };
   $('cards').querySelectorAll('[data-edit]').forEach(b => b.onclick = () => editProject(b.dataset.edit));
   $('cards').querySelectorAll('img').forEach(img => img.onerror = () => { img.replaceWith(Object.assign(document.createElement('span'),{className:'cover-symbol',textContent:'◈'})); });
+  installImageFallbacks($('student-home'));
+}
+function installImageFallbacks(root) {
+  root.querySelectorAll('img').forEach(img=>img.onerror=()=>{
+    img.replaceWith(Object.assign(document.createElement('span'),{className:'feature-placeholder',textContent:'◈'}));
+  });
+}
+function renderAdminTable(list) {
+  $('resource-library').hidden = false;
+  $('resource-library').innerHTML = `<div class="table-scroll"><table class="resource-table"><caption class="sr-only">전체 자료 보관함과 학생 표시 설정</caption><thead><tr><th scope="col">자료</th><th scope="col">출처 · 제작자</th><th scope="col">분류</th><th scope="col">학생 목록</th><th scope="col">관리</th></tr></thead><tbody>${list.map(p=>`<tr><td><strong>${escape(p.name)}</strong><p>${escape(p.description)}</p>${p.url ? `<a href="${escape(p.url)}" target="_blank" rel="noopener noreferrer">자료 열기 ↗<span class="sr-only"> · ${escape(p.name)} (새 탭)</span></a>` : '<small>주소 미등록</small>'}${p.hidden ? '<small class="hidden-note">전체 화면에서 숨김 · 수정에서 해제</small>' : ''}</td><td>${escape(RESOURCE_SOURCES[p.source])}<small>${escape(p.creator || '제작·제공처 미입력')}</small></td><td>${p.tags.map(t=>`<span class="library-tag">${escape(t)}</span>`).join('')}</td><td><label class="switch"><input type="checkbox" role="switch" data-student-toggle="${escape(p.id)}" aria-label="${escape(p.name)} 학생 목록에 표시" ${p.student ? 'checked' : ''} ${p.hidden ? 'disabled' : ''}><span aria-hidden="true"></span><small>${p.hidden ? '숨김 중' : p.student ? '표시' : '보관만'}</small></label></td><td><button data-resource-edit="${escape(p.id)}" aria-label="${escape(p.name)} 수정">수정</button></td></tr>`).join('') || '<tr><td colspan="5">조건에 맞는 자료가 없습니다. 검색·태그·출처·표시 필터를 확인하세요.</td></tr>'}</tbody></table></div>`;
+  $('resource-library').querySelectorAll('[data-resource-edit]').forEach(b=>b.onclick=()=>editProject(b.dataset.resourceEdit));
+  $('resource-library').querySelectorAll('[data-student-toggle]').forEach(input=>input.onchange=()=>{
+    const id = input.dataset.studentToggle;
+    const copy = structuredClone(data);copy.projects.find(p=>p.id===id).student=input.checked;
+    applyCatalog(copy);
+    $('resource-library').querySelector(`[data-student-toggle="${id}"]`)?.focus();
+  });
+}
+function updateStudentPreview() {
+  if ($('student-preview').hidden) return;
+  const date = $('preview-date').value || koreaDate();
+  const home = selectStudentHome(data,date);
+  const list = selectProjects(data,'student');
+  $('preview-content').innerHTML = `<p class="muted">${escape(date)} · ${home.feature ? escape(home.feature.title) : '기본 학생 화면'} · 현재 탭의 편집 내용</p>${featureMarkup(data,date)}${home.showLibrary ? `<h3>학생 자료 목록</h3><div class="cards">${list.map(p=>`<article class="card"><div class="cover">${p.image ? `<img src="${escape(p.image)}" alt="">` : '<span class="cover-symbol" aria-hidden="true">◈</span>'}</div><div class="card-body"><h3>${escape(p.name)}</h3><p>${escape(p.description)}</p>${p.url ? `<a class="launch" href="${escape(p.url)}" target="_blank" rel="noopener noreferrer">자료 열기 ↗<span class="sr-only"> · ${escape(p.name)} (새 탭)</span></a>` : '<span class="disabled">실행 주소 등록 예정</span>'}</div></article>`).join('') || '<p>표시할 자료가 없습니다.</p>'}</div>` : ''}`;
+  installImageFallbacks($('preview-content'));
 }
 function openEditor(html) { $('editor').hidden = false; $('editor').innerHTML = html; $('editor').scrollIntoView({behavior:'smooth'}); $('editor').querySelector('input,textarea,select')?.focus(); $('cancel').onclick = () => { $('editor').hidden = true; }; }
 function editProject(id) {
-  const p = data.projects.find(p => p.id === id) || {id:'',name:'',description:'',image:'',url:'',repositoryUrl:'',status:'development',tags:[],usage:'',student:false,teacher:false,hidden:false};
-  openEditor(`<h2>${id ? '프로젝트 수정' : '새 프로젝트'}</h2><form id="project-form"><div class="fields">${[['id','ID (영문 소문자·숫자·하이픈)'],['name','이름'],['url','실행 링크'],['repositoryUrl','GitHub 저장소 주소 (공개 저장소만)'],['image','대표 이미지 주소'],['tags','태그 (쉼표로 구분)']].map(([k,label]) => `<label>${label}<input name="${k}" value="${escape(k === 'tags' ? p.tags.join(', ') : p[k])}" ${['id','name'].includes(k) ? 'required' : ''} ${k === 'id' && id ? 'readonly' : ''}></label>`).join('')}<label>프로젝트 상태<select name="status">${Object.entries(PROJECT_STATUSES).map(([value,label])=>`<option value="${value}" ${p.status === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label>설명<textarea name="description">${escape(p.description)}</textarea></label><label>공개 활용 사례<textarea name="usage">${escape(p.usage)}</textarea></label></div><div class="checks">${[['student','학생 공개'],['teacher','교사 공개'],['hidden','화면에서 숨김']].map(([k,label]) => `<label><input type="checkbox" name="${k}" ${p[k] ? 'checked' : ''}>${label}</label>`).join('')}</div><p>공개 JSON에는 비공개 메모를 입력하지 마세요.</p><p id="form-error" role="alert"></p><button class="primary">탭에 적용</button> <button type="button" id="cancel">닫기</button></form>`);
-  $('project-form').onsubmit = event => { event.preventDefault(); const f = new FormData(event.target); const next = {id:f.get('id').trim(),name:f.get('name').trim(),url:f.get('url').trim(),image:f.get('image').trim(),repositoryUrl:f.get('repositoryUrl').trim(),status:f.get('status'),tags:[...new Set(f.get('tags').split(',').map(t => t.trim()).filter(Boolean))],description:f.get('description').trim(),usage:f.get('usage').trim(),student:f.has('student'),teacher:f.has('teacher'),hidden:f.has('hidden')}; const copy = structuredClone(data); if (id) copy.projects[copy.projects.findIndex(p => p.id === id)] = next; else copy.projects.push(next); try { applyCatalog(copy); $('editor').hidden = true; } catch(e) { $('form-error').textContent = e.message; } };
+  let resourceNumber=1;while(data.projects.some(p=>p.id==='resource-'+resourceNumber))resourceNumber++;
+  const p = data.projects.find(p => p.id === id) || {id:'resource-'+resourceNumber,name:'',description:'',image:'',url:'',repositoryUrl:'',status:'active',source:'web',creator:'',tags:[],usage:'',student:false,teacher:false,hidden:false};
+  openEditor(`<h2>${id ? '자료 수정' : '자료 보관함에 추가'}</h2><p>먼저 자료를 보관하고, 학생에게 보여줄 준비가 되면 학생 표시를 켜세요.</p><form id="project-form"><div class="fields">${[['name','자료 이름'],['url','자료 실행 링크'],['creator','제작자·제공처 (공개 표시)'],['repositoryUrl','GitHub 저장소 주소 (선택 · 공개 저장소만)'],['image','썸네일 이미지 주소 (선택)'],['tags','태그 (쉼표로 구분)']].map(([k,label]) => `<label>${label}<input name="${k}" value="${escape(k === 'tags' ? p.tags.join(', ') : p[k])}" ${['id','name'].includes(k) ? 'required' : ''} ${k === 'id' && id ? 'readonly' : ''}></label>`).join('')}<label>자료 출처<select name="source">${Object.entries(RESOURCE_SOURCES).map(([value,label])=>`<option value="${value}" ${p.source===value ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label>프로젝트 상태<select name="status">${Object.entries(PROJECT_STATUSES).map(([value,label])=>`<option value="${value}" ${p.status === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label><label>설명<textarea name="description">${escape(p.description)}</textarea></label><label>공개 활용 안내·사례<textarea name="usage">${escape(p.usage)}</textarea></label></div><div class="checks">${[['student','학생 목록에 표시'],['teacher','교사 목록에 표시'],['hidden','전체 화면에서 숨김']].map(([k,label]) => `<label><input type="checkbox" name="${k}" ${p[k] ? 'checked' : ''}>${label}</label>`).join('')}</div><p>보관 자료도 공개 JSON에 포함됩니다. 비공개 메모를 입력하지 마세요.</p><p id="form-error" role="alert"></p><button class="primary">탭에 적용</button> <button type="button" id="cancel">닫기</button></form>`);
+  $('project-form').onsubmit = event => { event.preventDefault(); const f = new FormData(event.target); const next = {id:p.id,name:f.get('name').trim(),url:f.get('url').trim(),image:f.get('image').trim(),repositoryUrl:f.get('repositoryUrl').trim(),status:f.get('status'),source:f.get('source'),creator:f.get('creator').trim(),tags:[...new Set(f.get('tags').split(',').map(t => t.trim()).filter(Boolean))],description:f.get('description').trim(),usage:f.get('usage').trim(),student:f.has('student'),teacher:f.has('teacher'),hidden:f.has('hidden')}; const copy = structuredClone(data); if (id) copy.projects[copy.projects.findIndex(p => p.id === id)] = next; else copy.projects.push(next); try { applyCatalog(copy); $('editor').hidden = true; } catch(e) { $('form-error').textContent = e.message; } };
 }
 function editPresets() {
   const draft = structuredClone(data.presets);
@@ -111,7 +150,17 @@ async function init() {
   $('preset-label').hidden = view !== 'presentation';
   if (view === 'admin') {
     $('admin-tools').hidden = false;
-    $('admin-tools').innerHTML = '<div class="warning"><strong>로컬 편집 도구 · 인증 없음</strong><p>숨김은 접근 차단이 아닙니다. 변경 후 JSON을 내보내 원본 파일을 교체하세요. 새로고침하면 미저장 변경이 사라집니다.</p></div><div class="actions"><button class="primary" id="add">+ 프로젝트 등록</button><button id="presets">프리셋 편집</button><button id="export">JSON 내보내기</button><button id="restore" disabled>직전 목록 복원</button><button id="paste-import">JSON 붙여넣기</button><label class="file-button">JSON 가져오기<input id="import" type="file" accept=".json,application/json"></label></div>';
+    $('title').textContent = '자료 보관함';
+    $('subtitle').textContent = '내가 만든 자료부터 다른 교사의 웹앱까지 모으고, 학생에게 보여줄 화면을 구성하세요.';
+    $('list-title').textContent = '전체 자료';
+    $('admin-tools').innerHTML = '<div class="warning"><strong>로컬 편집 도구 · 인증 없음</strong><p>숨김은 접근 차단이 아닙니다. 변경 후 JSON을 내보내 원본 파일을 교체하세요. 새로고침하면 미저장 변경이 사라집니다.</p></div><div class="actions"><button class="primary" id="add">+ 자료 수집</button><button id="student-home-edit">학생 홈 구성</button><button id="preview-student">학생 화면 미리보기</button><button id="presets">연수 프리셋 편집</button><button id="export">JSON 내보내기</button><button id="restore" disabled>직전 목록 복원</button><button id="paste-import">JSON 붙여넣기</button><label class="file-button">JSON 가져오기<input id="import" type="file" accept=".json,application/json"></label></div>';
+    $('source-label').hidden = false;$('visibility-label').hidden = false;
+    $('source-filter').innerHTML = '<option value="">모든 출처</option>'+Object.entries(RESOURCE_SOURCES).map(([value,label])=>`<option value="${value}">${label}</option>`).join('');
+    $('source-filter').onchange=render;$('visibility-filter').onchange=render;
+    $('student-home-edit').onclick=()=>editStudentHome(data,next=>applyCatalog({...data,studentHome:next.studentHome}),openEditor);
+    $('preview-date').value=koreaDate();$('preview-date').onchange=updateStudentPreview;
+    $('preview-student').onclick=()=>{$('student-preview').hidden=false;updateStudentPreview();$('student-preview').scrollIntoView({behavior:'smooth'});$('preview-date').focus();};
+    $('close-preview').onclick=()=>{$('student-preview').hidden=true;$('preview-student').focus();};
     $('restore').onclick = () => { if (previousCatalog) { applyCatalog(structuredClone(previousCatalog)); $('editor').hidden = true; $('notice').textContent = '직전 목록을 복원했습니다. 저장하려면 JSON을 내보내 원본을 교체하세요.'; } };
     $('add').onclick = () => editProject(); $('presets').onclick = editPresets;
     $('export').onclick = () => {
@@ -139,4 +188,11 @@ $('search').oninput = render; $('tag').onchange = render;
 $('retry').onclick = init;
 $('preset').onchange = () => { const url = new URL(location.href); url.searchParams.set('preset',$('preset').value); history.replaceState(null,'',url); refresh(); };
 window.addEventListener('beforeunload',e => { if(dirty) {e.preventDefault(); e.returnValue = '';}});
+// Re-evaluate scheduled features when an open classroom tab crosses midnight.
+if(view === 'student') {
+  let displayedDate = koreaDate();
+  const checkDate = () => { const today=koreaDate();if(data && today!==displayedDate){displayedDate=today;render();} };
+  setInterval(checkDate,30000);
+  document.addEventListener('visibilitychange',checkDate);
+}
 init();

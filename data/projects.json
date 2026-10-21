@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "projects": [
     {
       "id": "mini-game-platform",
@@ -17,7 +17,9 @@
       "hidden": false,
       "usage": "2~4명의 학생이 각자 iPad 등 기기로 같은 방에 참여해 만화를 이어 그립니다. 실제 수업 활용 사례는 아직 등록되지 않았습니다.",
       "repositoryUrl": "https://github.com/joonssem/mini_game_platform",
-      "status": "active"
+      "status": "active",
+      "source": "own",
+      "creator": ""
     }
   ],
   "presets": [
@@ -29,5 +31,9 @@
         "mini-game-platform"
       ]
     }
-  ]
+  ],
+  "studentHome": {
+    "showLibrary": true,
+    "features": []
+  }
 }

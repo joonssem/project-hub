@@ -1,13 +1,14 @@
 {
   "$schema":"https://json-schema.org/draft/2020-12/schema",
-  "title":"Project Hub public catalog v2",
+  "title":"Project Hub public catalog v3",
   "type":"object",
   "additionalProperties":false,
-  "required":["version","projects","presets"],
+  "required":["version","projects","presets","studentHome"],
   "properties":{
-    "version":{"const":2},
+    "version":{"const":3},
     "projects":{"type":"array","items":{"$ref":"#/$defs/project"}},
-    "presets":{"type":"array","items":{"$ref":"#/$defs/preset"}}
+    "presets":{"type":"array","items":{"$ref":"#/$defs/preset"}},
+    "studentHome":{"type":"object","additionalProperties":false,"required":["showLibrary","features"],"properties":{"showLibrary":{"type":"boolean"},"features":{"type":"array","items":{"$ref":"#/$defs/feature"}}}}
   },
   "$defs":{
     "id":{"type":"string","pattern":"^[a-z0-9-]+$"},
@@ -16,7 +17,7 @@
     "url":{"type":"string","anyOf":[{"const":""},{"pattern":"^https?://"}]},
     "project":{
       "type":"object","additionalProperties":false,
-      "required":["id","name","description","image","url","repositoryUrl","status","tags","student","teacher","hidden","usage"],
+      "required":["id","name","description","image","url","repositoryUrl","status","tags","student","teacher","hidden","usage","source","creator"],
       "properties":{
         "id":{"$ref":"#/$defs/id"},"name":{"$ref":"#/$defs/name"},
         "description":{"$ref":"#/$defs/text"},
@@ -24,9 +25,22 @@
         "url":{"$ref":"#/$defs/url"},
         "repositoryUrl":{"type":"string","anyOf":[{"const":""},{"pattern":"^https://github\\.com/[^/]+/[^/?#]+/?$"}]},
         "status":{"enum":["development","active","maintenance","archived"]},
+        "source":{"enum":["own","teacher","web","unknown"]},"creator":{"$ref":"#/$defs/text"},
         "tags":{"type":"array","items":{"$ref":"#/$defs/name"}},
         "student":{"type":"boolean"},"teacher":{"type":"boolean"},"hidden":{"type":"boolean"},
         "usage":{"$ref":"#/$defs/text"}
+      }
+    },
+    "feature":{
+      "type":"object","additionalProperties":false,
+      "required":["id","title","description","image","enabled","startDate","endDate","projectIds"],
+      "properties":{
+        "id":{"$ref":"#/$defs/id"},"title":{"$ref":"#/$defs/name"},"description":{"$ref":"#/$defs/text"},
+        "image":{"type":"string","anyOf":[{"const":""},{"pattern":"^https?://"},{"pattern":"^assets/[\\w/.-]+$"}]},
+        "enabled":{"type":"boolean"},
+        "startDate":{"type":"string","anyOf":[{"const":""},{"format":"date","pattern":"^\\d{4}-\\d{2}-\\d{2}$"}]},
+        "endDate":{"type":"string","anyOf":[{"const":""},{"format":"date","pattern":"^\\d{4}-\\d{2}-\\d{2}$"}]},
+        "projectIds":{"type":"array","uniqueItems":true,"items":{"$ref":"#/$defs/id"}}
       }
     },
     "preset":{

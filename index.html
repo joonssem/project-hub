@@ -1,3 +1,33 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Project Hub · 프로젝트 허브</title><link rel="stylesheet" href="./styles.css"></head>
-<body><a class="skip-link" href="#main-content">본문으로 건너뛰기</a><header><a class="brand" href="./">◈ <span>Project Hub<small>프로젝트를 잇는 공간</small></span></a><nav aria-label="이용 대상"><a href="?view=student" data-view="student">학생</a><a href="?view=teacher" data-view="teacher">교사</a><a href="?view=presentation" data-view="presentation">발표·연수</a><a href="?view=admin" data-view="admin">관리자</a></nav></header><main id="main-content" tabindex="-1"><section class="hero"><p class="eyebrow">INDEPENDENT PROJECTS, ONE PLACE</p><h1 id="title">함께 배우고, 즐기는 공간</h1><p id="subtitle"></p></section><section id="admin-tools" hidden></section><section class="toolbar" aria-label="프로젝트 필터"><label class="search">검색<input id="search" type="search" placeholder="이름, 설명, 태그로 찾아보세요"></label><label id="preset-label" hidden>발표 프리셋<select id="preset"></select></label><label>태그<select id="tag"><option value="">모든 태그</option></select></label></section><div class="list-heading"><h2 id="list-title">프로젝트</h2><span id="count" role="status" aria-live="polite"></span></div><p id="notice" role="status">프로젝트를 불러오는 중입니다…</p><button id="retry" hidden>다시 불러오기</button><noscript><p>프로젝트 목록을 표시하려면 JavaScript를 켜주세요.</p></noscript><section id="cards" class="cards" aria-label="프로젝트 목록"></section><section id="editor" hidden></section></main><footer>프로젝트는 독립적으로, 정보는 한곳에서.<span>공개 대상은 화면 표시 설정이며 실제 접근 제한이 아닙니다.</span></footer><script type="module" src="./src/app.js"></script></body></html>
+<body>
+  <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+  <header>
+    <a class="brand" href="./">◈ <span>Project Hub<small>프로젝트를 잇는 공간</small></span></a>
+    <nav aria-label="이용 대상"><a href="?view=student" data-view="student">학생</a><a href="?view=teacher" data-view="teacher">교사</a><a href="?view=presentation" data-view="presentation">발표·연수</a><a href="?view=admin" data-view="admin">관리자</a></nav>
+  </header>
+  <main id="main-content" tabindex="-1">
+    <section class="hero"><p class="eyebrow">INDEPENDENT PROJECTS, ONE PLACE</p><h1 id="title">함께 배우고, 즐기는 공간</h1><p id="subtitle"></p></section>
+    <section id="admin-tools" hidden></section>
+    <section id="student-preview" class="student-preview" aria-label="학생 화면 미리보기" hidden>
+      <div class="preview-heading"><h2>학생 화면 미리보기</h2><label>확인할 날짜 (한국 시간)<input id="preview-date" type="date"></label><button id="close-preview">미리보기 닫기</button></div>
+      <div id="preview-content"></div>
+    </section>
+    <div id="student-home"></div>
+    <section class="toolbar" aria-label="자료 필터">
+      <label class="search">검색<input id="search" type="search" placeholder="이름, 설명, 태그, 제작자로 찾기"></label>
+      <label id="preset-label" hidden>발표 프리셋<select id="preset"></select></label>
+      <label>태그<select id="tag"><option value="">모든 태그</option></select></label>
+      <label id="source-label" hidden>출처<select id="source-filter"></select></label>
+      <label id="visibility-label" hidden>학생 표시<select id="visibility-filter"><option value="">전체</option><option value="shown">표시 중</option><option value="stored">보관만 · 숨김</option></select></label>
+    </section>
+    <div class="list-heading"><h2 id="list-title">학습 자료</h2><span id="count" role="status" aria-live="polite"></span></div>
+    <p id="notice" role="status">자료를 불러오는 중입니다…</p><button id="retry" hidden>다시 불러오기</button>
+    <noscript><p>자료 목록을 표시하려면 JavaScript를 켜주세요.</p></noscript>
+    <section id="resource-library" aria-label="자료 보관함" hidden></section>
+    <section id="cards" class="cards" aria-label="자료 목록"></section>
+    <section id="editor" hidden></section>
+  </main>
+  <footer>프로젝트는 독립적으로, 정보는 한곳에서.<span>공개 대상은 화면 표시 설정이며 실제 접근 제한이 아닙니다.</span></footer>
+  <script type="module" src="./src/app.js"></script>
+</body></html>

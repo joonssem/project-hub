@@ -1,6 +1,8 @@
 # 공개 데이터 계약과 향후 이전
 
-현재 원본 형식은 `version: 2`다. 형식 정의는 [JSON Schema](catalog.schema.json), 실제 실행 검증은 `src/catalog.js`가 담당한다. 스키마 외에도 URL 자격증명·상대 경로 탈출, ID 중복, 프리셋 참조의 존재 여부를 실행 검증에서 검사한다.
+2026-10-21: 현재 원본·내보내기는 **v3**이며 v1·v2 가져오기를 지원한다. 자료 `source`·`creator`와 `studentHome`의 특집·기간·표시 규칙은 [학생 홈 운영 안내](student-home-guide.md)의 데이터 절을 따른다. 아래 v2 설명은 기존 필드와 이전 이력에 관한 기록이다.
+
+기존 v2 원본 형식은 `version: 2`다. 형식 정의는 [JSON Schema](catalog.schema.json), 실제 실행 검증은 `src/catalog.js`가 담당한다. 스키마 외에도 URL 자격증명·상대 경로 탈출, ID 중복, 프리셋 참조의 존재 여부를 실행 검증에서 검사한다.
 
 ## 신규 필드
 

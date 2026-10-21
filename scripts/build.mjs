@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {validateCatalog} from '../src/catalog.js';
 const root = fileURLToPath(new URL('../',import.meta.url));
 validateCatalog(JSON.parse(await readFile(path.join(root,'data/projects.json'),'utf8')));
-const files = ['index.html','styles.css','src/app.js','src/catalog.js','data/projects.json'];
+const files = ['index.html','styles.css','src/app.js','src/catalog.js','src/home.js','data/projects.json'];
 for (const entry of await readdir(path.join(root,'assets'),{withFileTypes:true})) {
   if (entry.isFile() && /\.(svg|png|jpg|jpeg|webp)$/.test(entry.name)) files.push('assets/'+entry.name);
 }
